@@ -1,3 +1,13 @@
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  user: 'labber',
+  password: 'labber',
+  host: 'localhost',
+  database: 'lightbnb'
+})
+pool.connect()
+pool.query(`SELECT title FROM properties LIMIT 10;`).then(response => {})
 const properties = require('./json/properties.json');
 const users = require('./json/users.json');
 
