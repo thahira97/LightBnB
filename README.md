@@ -14,11 +14,12 @@ This Project is an AirBNB clone and to practice on SQL and Database Design.
 ERD for the LightBNB project
 ![ERD Diagram](/docs/ERD.png)
 
-LighthouseBNB home page and Search shows Properties that fall within the options
-![LighthouseBNB-Home] (/docs/LighthouseBNB_Search.gif)
+LighthouseBNB home page and Search shows Properties that fall within the options that we have selected
+![LighthouseBNB-Home](/docs/LighthouseBNB_Search.gif)
+
 
 When users are logged-in and when they search it only shows the properties that belong to them
-
+![Users_login](/docs/users_loggedin.gif)
 
 
 
