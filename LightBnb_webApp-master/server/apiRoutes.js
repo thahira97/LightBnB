@@ -1,6 +1,8 @@
 module.exports = function(router, database) {
 
   router.get('/properties', (req, res) => {
+    const owner_id = req.session.userId;
+    req.query.owner_id = owner_id
     database.getAllProperties(req.query, 20)
     .then(properties => res.send({properties}))
     .catch(e => {

@@ -6,8 +6,7 @@ const pool = new Pool({
   host: "localhost",
   database: "lightbnb",
 });
-pool.connect();
-// pool.query(`SELECT title FROM properties LIMIT 10;`).then((response) => {});
+
 const properties = require("./json/properties.json");
 const users = require("./json/users.json");
 
@@ -47,7 +46,6 @@ const getUserWithId = function (id) {
       if (result.rows.length === 0) {
         return null;
       } else {
-        // console.log(result.rows[0]);
         return result.rows[0];
       }
     })
@@ -66,15 +64,11 @@ const addUser = function (user) {
   let queryString = `INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *`;
   let values = [user.name, user.email, user.password];
 
-  pool
+  return pool
     .query(queryString, values)
     .then((result) => {
-      // console.log(result.rows[0]);
       return result.rows[0];
     })
-    .catch((err) => {
-      console.log(err.message);
-    });
 };
 
 exports.addUser = addUser;
@@ -86,7 +80,7 @@ exports.addUser = addUser;
  * @return {Promise<[{}]>} A promise to the reservations.
  */
 const getAllReservations = (guest_id, limit = 10) => {
-  let queryString = `SELECT properties.*, reservations.* ,avg(rating) as average_rating
+  let queryString = `SELECT properties.*, reservations.* ,avg(property_reviews.rating) as average_rating
  FROM reservations
  JOIN properties ON reservations.property_id = properties.id
  JOIN property_reviews ON properties.id = property_reviews.property_id
@@ -118,54 +112,57 @@ exports.getAllReservations = getAllReservations;
  */
 const getAllProperties = (options, limit = 10) => {
   const queryParams = [];
-
+  console.log('opt+++++++', options)
   let queryString = `SELECT properties.*,  avg(property_reviews.rating) as average_rating
  FROM properties
  JOIN property_reviews ON properties.id = property_id `;
-
+  
   if (options.city) {
-    queryParams.push(`%${options.city}%`);
-    queryString += `WHERE city LIKE $${queryParams.length} `;
+     console.log(options.owner_id)
+    queryParams.push(`%${options.city}%`)
+    queryString += `WHERE city LIKE $${queryParams.length} `
   }
 
-  ///If owner_id is passed in,to return only props belong to them
+  ///If owner_id is passed in, return only props belonging to them
+ 
   if (options.owner_id) {
+   
     if (queryParams.length > 0) {
-      queryString += ` AND`;
+      queryString += ` AND`
     } else {
-      queryString += ` WHERE`;
+      queryString += ` WHERE`
     }
-    queryParams.push(`%${options.owner_id}%`);
-    queryString += ` properties.owner_id LIKE $${queryParams.length}`;
+    queryParams.push(options.owner_id)
+    queryString += ` properties.owner_id = $${queryParams.length}`
   }
 
   ///checking minimum_price and maximum price in range
 
   if (options.minimum_price_per_night) {
     if (queryParams.length > 0) {
-      queryString += ` AND`;
+      queryString += ` AND`
     } else {
-      queryString += ` WHERE`;
+      queryString += ` WHERE`
     }
-    queryParams.push(options.minimum_price_per_night * 100);
-    queryString += ` properties.cost_per_night >= $${queryParams.length}`;
+    queryParams.push(options.minimum_price_per_night * 100)
+    queryString += ` properties.cost_per_night >= $${queryParams.length}`
   }
 
   if (options.maximum_price_per_night) {
     if (queryParams.length > 0) {
-      queryString += ` AND`;
+      queryString += ` AND`
     } else {
-      queryString += ` WHERE`;
+      queryString += ` WHERE`
     }
-    queryParams.push(options.maximum_price_per_night * 100);
-    queryString += ` properties.cost_per_night <= $${queryParams.length}`;
+    queryParams.push(options.maximum_price_per_night * 100)
+    queryString += ` properties.cost_per_night <= $${queryParams.length}`
   }
 
   queryString += `GROUP BY properties.id `;
 
   if (options.minimum_rating) {
-    queryParams.push(Number(options.minimum_rating));
-    queryString += ` HAVING avg(rating) >= $${queryParams.length} `;
+    queryParams.push(Number(options.minimum_rating))
+    queryString += ` HAVING avg(property_reviews.rating) >= $${queryParams.length} `
   }
 
   queryParams.push(limit);
@@ -174,7 +171,11 @@ const getAllProperties = (options, limit = 10) => {
 
   console.log(queryString, queryParams);
 
-  return pool.query(queryString, queryParams).then((res) => res.rows);
+  return pool
+     .query(queryString, queryParams)
+     .then((res) => res.rows)
+     .catch((err) => {
+       console.log(err.message)});
 };
 exports.getAllProperties = getAllProperties;
 
@@ -200,6 +201,7 @@ const addProperty = function (property) {
   number_of_bathrooms,
   number_of_bedrooms)
   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *`
+
   let values = [
     property.owner_id,
     property.title,
@@ -216,7 +218,9 @@ const addProperty = function (property) {
     property.number_of_bathrooms,
     property.number_of_bedrooms,
   ];
-  return pool.query(queryString, values).then((result) => {result.rows[0]});
+  return pool
+   .query(queryString, values)
+   .then((result) => {result.rows[0]});
 };
 
 exports.addProperty = addProperty;
